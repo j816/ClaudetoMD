@@ -28,12 +28,12 @@ This is a graphical user interface (GUI) application that processes text files u
 2. Set up a virtual environment (recommended):
    - Create a new virtual environment:
      ```
-     python -m venv venv
+     python -m venv name_env
      ```
    - Activate the virtual environment:
      - On Unix or MacOS:
        ```
-       source venv/bin/activate
+       source name_env/bin/activate
        ```
      - On Windows:
        ```
