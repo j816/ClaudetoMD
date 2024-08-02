@@ -4,6 +4,8 @@ This is a graphical user interface (GUI) application that processes text files u
 In simpler terms; You can use one prompt on multiple text files. The ai will do its thing, and then output the list of files into a folder.
 You should use https://console.anthropic.com/dashboard and "generate a prompt" and test the prompt first on your data to ensure it's working -- then, use this to do it on multiple files. You can save the settings to quickly do a batch job with a certain prompt. 
 
+Fo Peppa!
+
 ## Features
 
 - Select prompt file, text file(s), and output directory
