@@ -8,7 +8,6 @@ import anthropic
 import threading
 import configparser
 import markdown
-from html2text import HTML2Text
 
 API_CONFIG_FILE = 'api_config.json'
 
@@ -223,16 +222,12 @@ class ClaudeProcessGUI:
         # Remove any XML tags that might be present in the content
         content = re.sub(r'<[^>]+>', '', content)
         
-        # Convert to Commonmark
-        html = markdown.markdown(content)
+        # Fix common issues
+        content = re.sub(r'\n\s*\n', '\n\n', content)  # Remove extra newlines
+        content = re.sub(r'(\w)\n(\w)', r'\1 \2', content)  # Join wrapped lines
         
-        # Convert HTML back to Markdown
-        h = HTML2Text()
-        h.body_width = 0  # Disable line wrapping
-        markdown_content = h.handle(html)
-        
-        # Fix escape characters in numbered lists
-        markdown_content = re.sub(r'(\d+)\\\.', r'\1.', markdown_content)
+        # Convert to Markdown
+        markdown_content = markdown.markdown(content)
         
         return markdown_content.strip()
 
