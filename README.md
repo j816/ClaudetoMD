@@ -21,7 +21,7 @@ This is a graphical user interface (GUI) application that processes text files u
 
 1. Clone this repository or download the source code:
    ```
-   git clone https://github.com/yourusername/claude-process-gui.git
+   git clone https://github.com/j816/ClaudetoMD.git
    cd claude-process-gui
    ```
 
