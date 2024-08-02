@@ -1,6 +1,8 @@
 # Claude Process GUI
 
 This is a graphical user interface (GUI) application that processes text files using the Anthropic Claude API. It allows users to select prompt files, text files, and an output directory, and then processes the files using the Claude API to generate markdown output.
+In simpler terms; You can use one prompt on multiple text files. The ai will do its thing, and then output the list of files into a folder.
+You should use https://console.anthropic.com/dashboard and "generate a prompt" and test the prompt first on your data to ensure it's working -- then, use this to do it on multiple files. You can save the settings to quickly do a batch job with a certain prompt. 
 
 ## Features
 
