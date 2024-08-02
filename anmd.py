@@ -169,8 +169,7 @@ class ClaudeProcessGUI:
             markdown_content = self.convert_to_markdown(api_response)
             if markdown_content:
                 output_file = os.path.join(output_dir, f"{os.path.basename(text_file)}.md")
-                with open(output_file, 'w') as f:
-                    f.write(markdown_content)
+                self.save_markdown(markdown_content, output_file)
                 self.log(f"Markdown content written to {output_file}")
             else:
                 self.log("No valid content found in the API response.")
@@ -216,20 +215,19 @@ class ClaudeProcessGUI:
                 "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"
             }
         )
-        return ''.join(block.text for block in message.content if isinstance(block, anthropic.types.TextBlock))
+        
+        # Print the raw response
+        print("Raw API Response:")
+        print(message.content[0].text)
+        
+        return message.content[0].text if message.content else ""
 
     def convert_to_markdown(self, content):
-        # Remove any XML tags that might be present in the content
-        content = re.sub(r'<[^>]+>', '', content)
-        
-        # Fix common issues
-        content = re.sub(r'\n\s*\n', '\n\n', content)  # Remove extra newlines
-        content = re.sub(r'(\w)\n(\w)', r'\1 \2', content)  # Join wrapped lines
-        
-        # Convert to Markdown
-        markdown_content = markdown.markdown(content)
-        
-        return markdown_content.strip()
+        return content.strip()
+
+    def save_markdown(self, content, filename):
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(content)
 
     def log(self, message):
         self.log_window.insert(tk.END, message + "\n")
