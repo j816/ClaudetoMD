@@ -8,6 +8,7 @@ import anthropic
 import threading
 import configparser
 import markdown
+import asyncio
 
 API_CONFIG_FILE = 'api_config.json'
 
@@ -97,9 +98,8 @@ class ClaudeProcessGUI:
         self.model_label = ttk.Label(self.settings_frame, text="Model:")
         self.model_label.pack()
         self.model_var = tk.StringVar(value="claude-3-5-sonnet-20240620")
-        self.model_dropdown = ttk.Combobox(self.settings_frame, textvariable=self.model_var, 
-                                           values=["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307", "claude-3-5-sonnet-20240620"])
-        self.model_dropdown.pack()
+        self.model_entry = ttk.Entry(self.settings_frame, textvariable=self.model_var, state='readonly')
+        self.model_entry.pack()
 
         # Max tokens
         self.max_tokens_label = ttk.Label(self.settings_frame, text="Max Tokens:")
@@ -144,6 +144,7 @@ class ClaudeProcessGUI:
             return
 
         self.log("Processing started...")
+        self.process_button.config(state='disabled')  # Disable the process button while processing
         threading.Thread(target=self.run_process, args=(prompt_file, text_files, output_dir)).start()
 
     def run_process(self, prompt_file, text_files, output_dir):
@@ -151,76 +152,77 @@ class ClaudeProcessGUI:
             for text_file in text_files:
                 self.log(f"Processing file: {text_file}")
                 self.process_single_file(prompt_file, text_file, output_dir)
+                # Update UI more frequently
+                self.master.update_idletasks()
             self.log("Processing complete!")
         except Exception as e:
             self.log(f"Error: {str(e)}")
+        finally:
+            self.process_button.config(state='normal')  # Enable the process button after processing is complete
 
     def process_single_file(self, prompt_file, text_file, output_dir):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            merged_file = os.path.join(temp_dir, 'merged_content.txt')
-            self.merge_prompt_and_text(prompt_file, text_file, merged_file)
+        with tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8', delete=False) as temp_file:
+            merged_content = self.merge_prompt_and_text(prompt_file, text_file)
+            temp_file.write(merged_content)
+            temp_file.flush()
 
-            api_response = self.call_anthropic_api(merged_file)
+            api_response = self.call_anthropic_api(temp_file.name)
 
-            raw_output_file = os.path.join(temp_dir, 'raw_output.json')
-            with open(raw_output_file, 'w') as f:
-                json.dump({'text': api_response}, f)
+        markdown_content = self.convert_to_markdown(api_response)
+        if markdown_content:
+            base_name = os.path.splitext(os.path.basename(text_file))[0]
+            output_file = os.path.join(output_dir, f"{base_name}.md")
+            self.save_markdown(markdown_content, output_file)
+            self.log(f"Markdown content written to {output_file}")
+        else:
+            self.log("No valid content found in the API response.")
 
-            markdown_content = self.convert_to_markdown(api_response)
-            if markdown_content:
-                output_file = os.path.join(output_dir, f"{os.path.basename(text_file)}.md")
-                self.save_markdown(markdown_content, output_file)
-                self.log(f"Markdown content written to {output_file}")
-            else:
-                self.log("No valid content found in the API response.")
+        os.unlink(temp_file.name)
 
-    def merge_prompt_and_text(self, prompt_path, text_path, output_path):
+    def merge_prompt_and_text(self, prompt_path, text_path):
         with open(prompt_path, 'r') as f:
             prompt = f.read()
         
         with open(text_path, 'r') as f:
             text = f.read()
         
-        merged_content = prompt.replace('{{TEXT}}', text)
-        
-        with open(output_path, 'w') as f:
-            f.write(merged_content)
+        return prompt.replace('{{TEXT}}', text)
 
     def call_anthropic_api(self, input_file):
-        api_key = self.api_key_entry.get()
-        if not api_key:
-            raise ValueError("Anthropic API Key is not set")
+        try:
+            api_key = self.api_key_entry.get()
+            if not api_key:
+                raise ValueError("Anthropic API Key is not set")
 
-        client = anthropic.Anthropic(api_key=api_key)
+            client = anthropic.Anthropic(api_key=api_key)
 
-        with open(input_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+            with open(input_file, 'r', encoding='utf-8') as f:
+                content = f.read()
 
-        message = client.messages.create(
-            model=self.model_var.get(),
-            max_tokens=self.max_tokens_var.get(),
-            temperature=self.temperature_var.get(),
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": content
-                        }
-                    ]
+            message = client.messages.create(
+                model=self.model_var.get(),
+                max_tokens=self.max_tokens_var.get(),
+                temperature=self.temperature_var.get(),
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": content
+                            }
+                        ]
+                    }
+                ],
+                extra_headers={
+                    "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"
                 }
-            ],
-            extra_headers={
-                "anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"
-            }
-        )
-        
-        # Print the raw response
-        print("Raw API Response:")
-        print(message.content[0].text)
-        
-        return message.content[0].text if message.content else ""
+            )
+            
+            return message.content[0].text if message.content else ""
+        except Exception as e:
+            self.log(f"API call failed: {str(e)}")
+            return ""
 
     def convert_to_markdown(self, content):
         return content.strip()
@@ -256,24 +258,32 @@ class ClaudeProcessGUI:
     def load_config(self):
         filename = filedialog.askopenfilename(filetypes=[("INI files", "*.ini")])
         if filename:
-            config = configparser.ConfigParser()
-            config.read(filename)
-            
-            self.prompt_entry.delete(0, tk.END)
-            self.prompt_entry.insert(0, config['Paths'].get('prompt_file', ''))
-            self.text_entry.delete(0, tk.END)
-            self.text_entry.insert(0, config['Paths'].get('text_files', ''))
-            self.output_entry.delete(0, tk.END)
-            self.output_entry.insert(0, config['Paths'].get('output_dir', ''))
-            
-            if not self.api_key_entry.get():  # Only set if empty
-                self.api_key_entry.delete(0, tk.END)
-                self.api_key_entry.insert(0, config['API'].get('api_key', ''))
-            self.model_var.set(config['API'].get('model', 'claude-3-5-sonnet-20240620'))
-            self.max_tokens_var.set(int(config['API'].get('max_tokens', '8192')))
-            self.temperature_var.set(float(config['API'].get('temperature', '0')))
-            
-            self.log(f"Configuration loaded from {filename}")
+            threading.Thread(target=self._async_load_config, args=(filename,)).start()
+
+    def _async_load_config(self, filename):
+        config = configparser.ConfigParser()
+        config.read(filename)
+        
+        # Use tkinter's after method to update UI from the main thread
+        self.master.after(0, self._update_ui_with_config, config)
+
+    def _update_ui_with_config(self, config):
+        # Update UI elements with config values
+        self.prompt_entry.delete(0, tk.END)
+        self.prompt_entry.insert(0, config['Paths'].get('prompt_file', ''))
+        self.text_entry.delete(0, tk.END)
+        self.text_entry.insert(0, config['Paths'].get('text_files', ''))
+        self.output_entry.delete(0, tk.END)
+        self.output_entry.insert(0, config['Paths'].get('output_dir', ''))
+        
+        if not self.api_key_entry.get():  # Only set if empty
+            self.api_key_entry.delete(0, tk.END)
+            self.api_key_entry.insert(0, config['API'].get('api_key', ''))
+        self.model_var.set(config['API'].get('model', 'claude-3-5-sonnet-20240620'))
+        self.max_tokens_var.set(int(config['API'].get('max_tokens', '8192')))
+        self.temperature_var.set(float(config['API'].get('temperature', '0')))
+        
+        self.log(f"Configuration loaded from {filename}")
 
     def save_settings(self):
         api_key = self.api_key_entry.get()
