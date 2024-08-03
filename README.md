@@ -1,111 +1,64 @@
 # Claude Process GUI
 
-This is a graphical user interface (GUI) application that processes text files using the Anthropic Claude API. It allows users to select prompt files, text files, and an output directory, and then processes the files using the Claude API to generate markdown output.
+This is a graphical user interface (GUI) application that processes text files using the Anthropic Claude API. It allows users to select a prompt file, multiple text files, and an output directory, and then processes the files using the Claude API to generate markdown output.
 
+## Purpose
 
-In simpler terms; You can use one prompt on multiple text files. The ai will do its thing, and then output the list of files into a folder.
-You should use https://console.anthropic.com/dashboard and "generate a prompt" and test the prompt first on your data to ensure it's working -- then, use this to do it on multiple files. You can save the settings to quickly do a batch job with a certain prompt. 
+The Claude Process GUI simplifies the task of applying a single prompt to multiple text files. This can be useful in various scenarios, such as:
 
-Fo Peppa!
+- Summarizing a collection of articles or documents
+- Generating responses to a set of customer inquiries
+- Analyzing sentiment across multiple reviews or feedback submissions
+- Extracting key information from a series of reports
 
-## Features
+By using the Anthropic Claude API, the application leverages powerful language models to process and generate meaningful output from the input text files.
 
-- Select prompt file, text file(s), and output directory
-- Configure API settings (API key, model, max tokens, temperature)
-- Process files using the Anthropic Claude API
-- Convert API responses to markdown format
-- Save and load configuration settings
-- Persistent storage of API key and temperature settings
+## Example Use Cases
 
-## Requirements
+1. **Article Summarization**: You have a collection of news articles or blog posts that you want to summarize. Create a prompt file with instructions like "Summarize the following article in 3-5 sentences: {{TEXT}}", select the articles as input text files, and let the application generate concise summaries for each article.
 
-- Python 3.7+
-- tkinter (usually included with Python installations)
-- See `requirements.txt` for a list of required Python packages
+2. **Customer Support Responses**: You have a set of common customer inquiries or support tickets. Create a prompt file with a template response, such as "Thank you for contacting us. Regarding your issue: {{TEXT}}, here are some steps you can try: ...". Select the customer inquiries as input text files, and the application will generate personalized responses for each inquiry.
 
-## Installation
+3. **Sentiment Analysis**: You have a dataset of product reviews or customer feedback. Create a prompt file with instructions like "Analyze the sentiment of the following review (positive, negative, or neutral) and provide a brief explanation: {{TEXT}}". Select the reviews as input text files, and the application will perform sentiment analysis on each review.
 
-1. Clone this repository or download the source code:
-   ```
-   git clone https://github.com/j816/ClaudetoMD.git
-   cd claude-process-gui
-   ```
+4. **Information Extraction**: You have a collection of reports or documents containing specific information you want to extract. Create a prompt file with instructions like "Extract the following information from the given text: date, location, key findings. {{TEXT}}". Select the reports as input text files, and the application will attempt to extract the requested information from each document.
 
-2. Set up a virtual environment (recommended):
-   - Create a new virtual environment:
-     ```
-     python -m venv name_env
-     ```
-   - Activate the virtual environment:
-     - On Unix or MacOS:
-       ```
-       source name_env/bin/activate
-       ```
-     - On Windows:
-       ```
-       venv\Scripts\activate
-       ```
-   - Your command prompt should now show the name of your virtual environment, indicating it's active.
+## Getting Started
 
-3. Install the required packages:
+1. Install the required dependencies:
    ```
    pip install -r requirements.txt
    ```
 
-4. Set up your Anthropic API key in the settings tab of the application when you first run it.
+2. Set up your Anthropic API key in the application's settings tab.
 
-5. When you're done using the application, you can deactivate the virtual environment:
-   ```
-   deactivate
-   ```
+3. Prepare your prompt file. The prompt file should include the `{{TEXT}}` placeholder, which will be replaced with the content of each input text file during processing.
 
-If you encounter issues with tkinter:
-- On Ubuntu or Debian: `sudo apt-get install python3-tk`
-- On Fedora: `sudo dnf install python3-tkinter`
-- On macOS with Homebrew: `brew install python-tk`
-
-Note: Always activate your virtual environment before running the application or installing new packages for this project.
-
-## Usage
-
-1. Run the script:
+4. Launch the application:
    ```
    python anmd.py
    ```
 
-2. Prepare your prompt file:
-   - The prompt file must include a `{{TEXT}}` placeholder where you want the content of your text file to be inserted.
-   - Example: "Summarize the following text: {{TEXT}}"
+5. In the application's main tab:
+   - Select your prompt file
+   - Select one or more input text files
+   - Choose an output directory where the generated markdown files will be saved
 
-3. In the GUI:
-   - Select your prompt file, text file(s), and output directory in the Main tab.
-   - Configure the API settings in the Settings tab (API key, model, max tokens, temperature).
-   - Click "Process" to start processing your files.
+6. Click the "Process" button to start processing the files. The application will process each input text file using the specified prompt and generate corresponding markdown files in the output directory.
 
-4. The application will generate markdown files in the specified output directory.
+7. Monitor the progress and any logs in the application's log window.
 
 ## Configuration
 
-- You can save and load configuration settings using the "Save Config" and "Load Config" buttons in the main interface.
-- API key and temperature settings are automatically saved to `api_config.json` in the same directory as the script.
+- You can save and load configuration settings using the "Save Config" and "Load Config" buttons in the main tab. This allows you to quickly set up the application with previously used prompt files, input text files, and output directories.
 
-## Development
+- The application automatically saves your Anthropic API key and temperature settings for future use.
 
-To contribute to this project:
+## Troubleshooting
 
-1. Fork the repository
-2. Create a new branch for your feature
-3. Make your changes and commit them
-4. Push to your fork and submit a pull request
+- If you encounter any issues or errors, check the application's log window for details.
+- Make sure you have a valid Anthropic API key set up in the settings tab.
+- Ensure that your prompt file includes the `{{TEXT}}` placeholder.
+- Verify that the input text files and output directory are accessible and have the necessary permissions.
 
-Please ensure your code adheres to the existing style and includes appropriate tests.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you encounter any issues or have questions, please file an issue on the GitHub issue tracker.
-
-For more information, contact [Your Name] at [your.email@example.com].
+If you have any further questions or need assistance, please refer to the documentation or contact the application's developer.
