@@ -157,23 +157,24 @@ class ClaudeProcessGUI:
 
     def run_process(self, prompt_file, text_files, output_dir):
         try:
-            for text_file in text_files:
-                self.log(f"Processing file: {text_file}")
-                self.process_single_file(prompt_file, text_file, output_dir)
-                self.master.update_idletasks()
+            with anthropic.Anthropic(api_key=self.api_key_entry.get()) as client: # Use a context manager for the Anthropic client
+                for text_file in text_files:
+                    self.log(f"Processing file: {text_file}")
+                    self.process_single_file(prompt_file, text_file, output_dir, client) # Pass the client to process_single_file
+                    self.master.update_idletasks()
             self.log("Processing complete!")
         except Exception as e:
             self.log(f"Error: {str(e)}")
         finally:
             self.process_button.config(state='normal')
 
-    def process_single_file(self, prompt_file, text_file, output_dir):
+    def process_single_file(self, prompt_file, text_file, output_dir, client): # Add client as a parameter
         with tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8', delete=False) as temp_file:
             merged_content = self.merge_prompt_and_text(prompt_file, text_file)
             temp_file.write(merged_content)
             temp_file.flush()
 
-            api_response = self.call_anthropic_api(temp_file.name)
+            api_response = self.call_anthropic_api(temp_file.name, client) # Pass the client to call_anthropic_api
 
         markdown_content = self.convert_to_markdown(api_response)
         if markdown_content:
@@ -195,12 +196,12 @@ class ClaudeProcessGUI:
         
         return prompt.replace('{{TEXT}}', text)
 
-    def call_anthropic_api(self, input_file: str) -> str:
-        api_key = self.api_key_entry.get()
-        if not api_key:
-            raise ValueError("Anthropic API Key is not set")
+    def call_anthropic_api(self, input_file: str, client: anthropic.Anthropic) -> str: # Add client as a parameter
+        # api_key = self.api_key_entry.get() # Removed as client is already initialized
+        # if not api_key:
+        #     raise ValueError("Anthropic API Key is not set")
 
-        client = anthropic.Anthropic(api_key=api_key)
+        # client = anthropic.Anthropic(api_key=api_key) # Removed as client is passed as a parameter
 
         with open(input_file, 'r', encoding='utf-8') as f:
             content = f.read()
